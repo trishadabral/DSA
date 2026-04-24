@@ -1,13 +1,18 @@
+#define ll long long
 class Solution {
 public:
-    int chalkReplacer(vector<int>& chalk, int k) {
-        long long c=0;
-        for(int x:chalk)c+=x;
-        int rem=k%c;
-        for(int i=0;i<chalk.size();i++){
-            if(rem<chalk[i])return i;
-            rem-=chalk[i];
+    ll chalkReplacer(vector<int>& chalk, int k) {
+        ll sum = 0, n = chalk.size();
+        for (int i = 0; i < n; i++) {
+             sum +=   chalk[i];
         }
-        return -1;
+        k %= sum;
+
+        for (ll i = 0; i < n; i++) {
+            if (k < chalk[i])
+                return i;
+            k -= chalk[i];
+        }
+        return 0;
     }
 };
