@@ -1,114 +1,41 @@
-#include <bits/stdc++.h>
-using namespace std;
-
 class Solution {
 public:
-    struct Node {
-        long long cnt;
-        long long wav;
-    };
-
-    string s;
-
-    map<tuple<int,bool,bool,int,int,int>,Node> dp;
-
-    Node dfs(int pos,
-             bool tight,
-             bool started,
-             int len,
-             int last1,
-             int last2) {
-
-        if(pos == s.size()) {
-            return {1,0};
-        }
-
-        auto key = make_tuple(pos,tight,started,len,last1,last2);
-
-        if(!tight && dp.count(key))
-            return dp[key];
-
-        int limit = tight ? s[pos]-'0' : 9;
-
-        long long totalCnt = 0;
-        long long totalWav = 0;
-
-        for(int d=0; d<=limit; d++) {
-
-            bool ntight = tight && (d==limit);
-
-            if(!started && d==0) {
-
-                Node nxt = dfs(pos+1,
-                               ntight,
-                               false,
-                               0,
-                               -1,
-                               -1);
-
-                totalCnt += nxt.cnt;
-                totalWav += nxt.wav;
+    long long solve(long long x) {
+        long long ans = 0;
+        for (long long left = x / 10, right = x % 10, p10 = 1; left >= 10;) {
+            int d = left % 10, dl = left / 10 % 10, dr = right / p10;
+            left /= 10;
+            // stage 1: cycle right digit only
+            bool peak = d > dl && d > dr, valley = d < dl && d < dr;
+            if (valley) {
+                ans += right - p10 * (d+1);
             }
-            else {
-
-                if(len==0) {
-
-                    Node nxt = dfs(pos+1,
-                                   ntight,
-                                   true,
-                                   1,
-                                   d,
-                                   -1);
-
-                    totalCnt += nxt.cnt;
-                    totalWav += nxt.wav;
-                }
-                else if(len==1) {
-
-                    Node nxt = dfs(pos+1,
-                                   ntight,
-                                   true,
-                                   2,
-                                   d,
-                                   last1);
-
-                    totalCnt += nxt.cnt;
-                    totalWav += nxt.wav;
-                }
-                else {
-
-                    long long add = 0;
-
-                    if((last1 > last2 && last1 > d) ||
-                       (last1 < last2 && last1 < d))
-                        add = 1;
-
-                    Node nxt = dfs(pos+1,
-                                   ntight,
-                                   true,
-                                   len+1,
-                                   d,
-                                   last1);
-
-                    totalCnt += nxt.cnt;
-                    totalWav += nxt.wav + add*nxt.cnt;
-                }
+            if (peak) {
+                ans += right;
             }
+            if (d > dl && d <= dr) {
+                ans += p10 * d;
+            }
+            // stage 2: cycle right digit with center digit in [0, d-1]
+            int up = 9-min(d, dl);
+            ans += (45 - up*(up+1)/2) * p10;
+            if (d > dl)
+                ans += (d*(d-1)/2 - dl*(dl+1)/2) * p10;
+            // stage 3: cycle right digit and center digit with left digit in [0, dl-1]
+            int upl = 9-dl;
+            ans += (dl*90 - dl*(dl+1)*(dl-1)/6 - 9*10*11/6 + upl*(upl+1)*(upl+2)/6)
+            * p10;
+            if (left < 10)
+                ans -= 45 * p10;
+            // stage 4: cycle all three digits
+            ans += (900 - 9*10*11/3) * (left/10) * p10;
+            if (left >= 10)
+                ans -= 45 * p10;
+            p10 *= 10, right += d * p10;
         }
-        Node ans = {totalCnt,totalWav};
-        if(!tight)
-            dp[key] = ans;
         return ans;
     }
-    long long solve(long long x) {
-        if(x < 0)
-            return 0;
-        s = to_string(x);
-        dp.clear();
-        return dfs(0,true,false,0,-1,-1).wav;
-    }
-
     long long totalWaviness(long long num1, long long num2) {
-        return solve(num2) - solve(num1-1);
+        return solve(num2+1) - solve(num1);
     }
 };
